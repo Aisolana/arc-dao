@@ -51,12 +51,13 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
 .vote-counts{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px}
 .countdown{font-size:12px;color:#888;margin-top:6px}
 .creator{font-size:12px;color:#aaa;font-family:monospace;margin-top:4px}
-.wallet-bar{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem}
+.wallet-bar{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
 .dot.on{background:#639922}
 .wallet-addr{font-size:13px;color:#666;font-family:monospace}
 .connect-btn{margin-left:auto;width:auto;padding:0 16px}
 .empty{text-align:center;padding:2rem;color:#888;font-size:14px}
+.network-warning{background:#FAEEDA;color:#633806;border:0.5px solid #EF9F27;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:1rem;display:none}
 </style>
 </head>
 <body>
@@ -64,6 +65,9 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
   <div class="topbar">
     <h1>DAO</h1>
     <span class="badge">Arc Testnet</span>
+  </div>
+  <div class="network-warning" id="net-warning">
+    Wrong network detected. Please switch to Arc Testnet in MetaMask.
   </div>
   <div class="wallet-bar">
     <div class="dot" id="wdot"></div>
@@ -107,7 +111,8 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
 <script>
 const CONTRACT="0x01D6a9d7b082515cd4C9d8CD320539b913D93886";
 const RPC="https://rpc.testnet.arc.network";
-const ARC_CHAIN_ID="0x"+Number(5042002).toString(16);
+const CHAIN_ID_DEC=5042002;
+const CHAIN_ID_HEX="0x"+CHAIN_ID_DEC.toString(16);
 const ABI=[
   {name:"createProposal",type:"function",inputs:[{name:"description",type:"string"},{name:"durationInSeconds",type:"uint256"}],outputs:[{name:"",type:"uint256"}],stateMutability:"nonpayable"},
   {name:"vote",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"support",type:"bool"}],outputs:[],stateMutability:"nonpayable"},
@@ -118,66 +123,55 @@ const ABI=[
 ];
 let userAddress=null,provider=null,signer=null,proposals=[];
 const readProvider=new ethers.providers.JsonRpcProvider(RPC);
-
-function applyPreset(){
-  const v=document.getElementById("p-preset").value;
-  if(v) document.getElementById("p-hours").value=v;
-}
-function showStatus(id,msg,type){
-  const el=document.getElementById(id);
-  el.textContent=msg;
-  el.className="status "+type;
-}
-function timeLeft(endTime){
-  const now=Math.floor(Date.now()/1000);
-  const diff=endTime-now;
-  if(diff<=0) return "Ended";
-  const d=Math.floor(diff/86400),h=Math.floor((diff%86400)/3600),m=Math.floor((diff%3600)/60);
-  if(d>0) return d+"d "+h+"h left";
-  if(h>0) return h+"h "+m+"m left";
-  return m+"m left";
-}
-function statusPill(p){
-  const now=Math.floor(Date.now()/1000);
-  if(p.executed) return p.passed?'<span class="pill pill-passed">Passed</span>':'<span class="pill pill-failed">Failed</span>';
-  if(now<p.endTime) return '<span class="pill pill-active">Active</span>';
-  return '<span class="pill pill-ended">Ready to execute</span>';
+function applyPreset(){const v=document.getElementById("p-preset").value;if(v)document.getElementById("p-hours").value=v;}
+function showStatus(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className="status "+type;}
+function timeLeft(endTime){const now=Math.floor(Date.now()/1000);const diff=endTime-now;if(diff<=0)return"Ended";const d=Math.floor(diff/86400),h=Math.floor((diff%86400)/3600),m=Math.floor((diff%3600)/60);if(d>0)return d+"d "+h+"h left";if(h>0)return h+"h "+m+"m left";return m+"m left";}
+function statusPill(p){const now=Math.floor(Date.now()/1000);if(p.executed)return p.passed?'<span class="pill pill-passed">Passed</span>':'<span class="pill pill-failed">Failed</span>';if(now<p.endTime)return'<span class="pill pill-active">Active</span>';return'<span class="pill pill-ended">Ready to execute</span>';}
+async function ensureArcNetwork(){
+  const chainId=await window.ethereum.request({method:"eth_chainId"});
+  if(chainId.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){
+    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID_HEX}]});}
+    catch(e){
+      if(e.code===4902){
+        await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]});
+      } else throw new Error("Please switch to Arc Testnet in MetaMask");
+    }
+  }
+  provider=new ethers.providers.Web3Provider(window.ethereum);
+  signer=provider.getSigner();
 }
 async function connectWallet(){
   if(!window.ethereum){alert("MetaMask not found.");return;}
   try{
     const accounts=await window.ethereum.request({method:"eth_requestAccounts"});
     userAddress=accounts[0];
-    try{
-      await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID}]});
-    }catch(e){
-      if(e.code===4902){
-        await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]});
-      }
-    }
-    provider=new ethers.providers.Web3Provider(window.ethereum);
-    signer=provider.getSigner();
+    await ensureArcNetwork();
     document.getElementById("wdot").className="dot on";
     document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);
     document.getElementById("wbtn").textContent="Connected";
     document.getElementById("wbtn").disabled=true;
     document.getElementById("create-btn").disabled=false;
+    document.getElementById("net-warning").style.display="none";
     await loadProposals();
-  }catch(e){alert("Failed: "+e.message);}
+  }catch(e){document.getElementById("net-warning").style.display="block";document.getElementById("net-warning").textContent=e.message||"Connection failed";}
 }
+window.ethereum&&window.ethereum.on("chainChanged",async()=>{
+  const chainId=await window.ethereum.request({method:"eth_chainId"});
+  if(chainId.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){document.getElementById("net-warning").style.display="block";}
+  else{document.getElementById("net-warning").style.display="none";provider=new ethers.providers.Web3Provider(window.ethereum);signer=provider.getSigner();}
+});
 async function loadProposals(){
   try{
     const contract=new ethers.Contract(CONTRACT,ABI,readProvider);
     const count=await contract.proposalCount();
     const total=count.toNumber();
-    proposals=[];
-    let active=0,executed=0;
+    proposals=[];let active=0,executed=0;
     for(let i=1;i<=total;i++){
       const p=await contract.getProposal(i);
       const now=Math.floor(Date.now()/1000);
       const obj={id:p.id.toNumber(),creator:p.creator,description:p.description,yesVotes:p.yesVotes.toNumber(),noVotes:p.noVotes.toNumber(),startTime:p.startTime.toNumber(),endTime:p.endTime.toNumber(),executed:p.executed,passed:p.passed};
-      if(!obj.executed&&now<obj.endTime) active++;
-      if(obj.executed) executed++;
+      if(!obj.executed&&now<obj.endTime)active++;
+      if(obj.executed)executed++;
       proposals.push(obj);
     }
     document.getElementById("s-total").textContent=total;
@@ -198,7 +192,7 @@ async function renderProposals(){
     const isActive=!p.executed&&now<p.endTime;
     const canExecute=!p.executed&&now>=p.endTime;
     let voted=false;
-    if(contract&&userAddress) try{voted=await contract.hasUserVoted(p.id,userAddress);}catch(e){}
+    if(contract&&userAddress)try{voted=await contract.hasUserVoted(p.id,userAddress);}catch(e){}
     html+=`<div class="proposal-card">
       <div class="proposal-header">
         <div>
@@ -212,7 +206,7 @@ async function renderProposals(){
       <div class="vote-bar-wrap"><div class="vote-bar-yes" style="width:${yesPct}%"></div></div>
       <div class="countdown">${isActive?timeLeft(p.endTime):p.executed?"Executed":"Voting ended"}</div>
       ${isActive&&userAddress&&!voted?`<div class="btn-row"><button class="btn btn-yes" onclick="castVote(${p.id},true)">Vote yes</button><button class="btn btn-no" onclick="castVote(${p.id},false)">Vote no</button></div>`:""}
-      ${isActive&&voted?`<div style="font-size:13px;color:#888;margin-top:10px">You have voted on this proposal</div>`:""}
+      ${isActive&&voted?`<div style="font-size:13px;color:#888;margin-top:10px">You have already voted</div>`:""}
       ${canExecute&&userAddress?`<div style="margin-top:10px"><button class="btn" onclick="executeProposal(${p.id})">Execute proposal</button></div>`:""}
       <div class="status" id="status-${p.id}"></div>
     </div>`;
@@ -220,18 +214,14 @@ async function renderProposals(){
   list.innerHTML=html;
 }
 async function createProposal(){
-  if(!signer) return;
-  try{
-    await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID}]});
-    provider=new ethers.providers.Web3Provider(window.ethereum);
-    signer=provider.getSigner();
-  }catch(e){showStatus("create-status","Please switch to Arc Testnet in MetaMask","error");return;}
+  if(!signer)return;
   const desc=document.getElementById("p-desc").value.trim();
   const hours=parseInt(document.getElementById("p-hours").value);
   if(!desc){showStatus("create-status","Please enter a description.","error");return;}
   if(!hours||hours<1||hours>720){showStatus("create-status","Duration must be 1-720 hours.","error");return;}
   showStatus("create-status","Submitting... confirm in MetaMask","loading");
   try{
+    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.createProposal(desc,hours*3600);
     showStatus("create-status","Waiting for confirmation...","loading");
@@ -242,9 +232,10 @@ async function createProposal(){
   }catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error");}
 }
 async function castVote(proposalId,support){
-  if(!signer) return;
+  if(!signer)return;
   showStatus("status-"+proposalId,(support?"Voting yes":"Voting no")+"... confirm in MetaMask","loading");
   try{
+    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.vote(proposalId,support);
     await tx.wait();
@@ -253,9 +244,10 @@ async function castVote(proposalId,support){
   }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
 }
 async function executeProposal(proposalId){
-  if(!signer) return;
+  if(!signer)return;
   showStatus("status-"+proposalId,"Executing... confirm in MetaMask","loading");
   try{
+    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.executeProposal(proposalId);
     await tx.wait();
@@ -263,13 +255,7 @@ async function executeProposal(proposalId){
     await loadProposals();
   }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
 }
-(async()=>{
-  try{
-    const contract=new ethers.Contract(CONTRACT,ABI,readProvider);
-    const count=await contract.proposalCount();
-    document.getElementById("s-total").textContent=count.toString();
-  }catch(e){}
-})();
+(async()=>{try{const contract=new ethers.Contract(CONTRACT,ABI,readProvider);const count=await contract.proposalCount();document.getElementById("s-total").textContent=count.toString();}catch(e){}})();
 </script>
 </body>
 </html>
