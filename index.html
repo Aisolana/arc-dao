@@ -221,6 +221,11 @@ async function renderProposals(){
 }
 async function createProposal(){
   if(!signer) return;
+  try{
+    await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID}]});
+    provider=new ethers.providers.Web3Provider(window.ethereum);
+    signer=provider.getSigner();
+  }catch(e){showStatus("create-status","Please switch to Arc Testnet in MetaMask","error");return;}
   const desc=document.getElementById("p-desc").value.trim();
   const hours=parseInt(document.getElementById("p-hours").value);
   if(!desc){showStatus("create-status","Please enter a description.","error");return;}
