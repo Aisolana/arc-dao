@@ -107,7 +107,7 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
 <script>
 const CONTRACT="0x01D6a9d7b082515cd4C9d8CD320539b913D93886";
 const RPC="https://rpc.testnet.arc.network";
-const ARC_CHAIN_ID="0x4CE852";
+const ARC_CHAIN_ID="0x"+Number(5042002).toString(16);
 const ABI=[
   {name:"createProposal",type:"function",inputs:[{name:"description",type:"string"},{name:"durationInSeconds",type:"uint256"}],outputs:[{name:"",type:"uint256"}],stateMutability:"nonpayable"},
   {name:"vote",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"support",type:"bool"}],outputs:[],stateMutability:"nonpayable"},
