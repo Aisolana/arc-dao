@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DAO — Arc Testnet</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem 1rem}
+.app{max-width:640px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+.topbar h1{font-size:22px;font-weight:500}
+.badge{font-size:12px;padding:3px 10px;border-radius:8px;background:#eee;color:#555;border:0.5px solid #ddd}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat{background:#fff;border-radius:8px;padding:1rem;border:0.5px solid #eee}
+.stat-label{font-size:12px;color:#888;margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:500}
+.card{background:#fff;border:0.5px solid #eee;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.section-label{font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#111}
+.field textarea{height:72px;resize:vertical}
+.duration-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 1rem;border-radius:8px;border:0.5px solid #ddd;background:transparent;color:#111;font-size:14px;cursor:pointer;font-family:inherit;width:100%}
+.btn:hover{background:#f5f5f5}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-primary{background:#111;color:#fff;border-color:#111}
+.btn-primary:hover{opacity:0.85;background:#111}
+.btn-yes{background:#EAF3DE;color:#27500A;border-color:#97C459}
+.btn-yes:hover{background:#C0DD97}
+.btn-no{background:#FCEBEB;color:#791F1F;border-color:#F09595}
+.btn-no:hover{background:#F7C1C1}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.status{font-size:13px;padding:10px 12px;border-radius:8px;margin-top:10px;display:none}
+.status.success{background:#EAF3DE;color:#27500A;display:block}
+.status.error{background:#FCEBEB;color:#791F1F;display:block}
+.status.loading{background:#f5f5f5;color:#666;display:block}
+.proposal-card{background:#fff;border:0.5px solid #eee;border-radius:12px;padding:1.25rem;margin-bottom:10px}
+.proposal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:12px}
+.proposal-id{font-size:12px;color:#aaa;font-family:monospace}
+.proposal-desc{font-size:15px;font-weight:500;flex:1}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.pill-active{background:#EAF3DE;color:#27500A}
+.pill-ended{background:#eee;color:#666}
+.pill-passed{background:#E6F1FB;color:#0C447C}
+.pill-failed{background:#FCEBEB;color:#791F1F}
+.vote-bar-wrap{margin:10px 0;height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.vote-bar-yes{height:100%;background:#639922;border-radius:3px}
+.vote-counts{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px}
+.countdown{font-size:12px;color:#888;margin-top:6px}
+.creator{font-size:12px;color:#aaa;font-family:monospace;margin-top:4px}
+.wallet-bar{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem}
+.dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
+.dot.on{background:#639922}
+.wallet-addr{font-size:13px;color:#666;font-family:monospace}
+.connect-btn{margin-left:auto;width:auto;padding:0 16px}
+.empty{text-align:center;padding:2rem;color:#888;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>DAO</h1>
+    <span class="badge">Arc Testnet</span>
+  </div>
+  <div class="wallet-bar">
+    <div class="dot" id="wdot"></div>
+    <span class="wallet-addr" id="waddr">Not connected</span>
+    <button class="btn connect-btn" onclick="connectWallet()" id="wbtn">Connect wallet</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total proposals</div><div class="stat-value" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-label">Active</div><div class="stat-value" id="s-active">—</div></div>
+    <div class="stat"><div class="stat-label">Executed</div><div class="stat-value" id="s-executed">—</div></div>
+  </div>
+  <div class="card">
+    <div class="section-label">Create proposal</div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="p-desc" placeholder="What are you proposing?"></textarea>
+    </div>
+    <div class="duration-row">
+      <div class="field">
+        <label>Duration (hours)</label>
+        <input type="number" id="p-hours" placeholder="e.g. 72" min="1" max="720" value="72"/>
+      </div>
+      <div class="field">
+        <label>Or pick</label>
+        <select id="p-preset" onchange="applyPreset()">
+          <option value="">Custom</option>
+          <option value="1">1 hour</option>
+          <option value="24">1 day</option>
+          <option value="72">3 days</option>
+          <option value="168">1 week</option>
+          <option value="720">30 days</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="create-btn" onclick="createProposal()" disabled>Submit proposal</button>
+    <div class="status" id="create-status"></div>
+  </div>
+  <div class="section-label" style="margin-bottom:12px">Proposals</div>
+  <div id="proposals-list"><div class="empty">Connect your wallet to load proposals</div></div>
+</div>
+<script>
+const CONTRACT="0x01D6a9d7b082515cd4C9d8CD320539b913D93886";
+const RPC="https://rpc.testnet.arc.network";
+const ARC_CHAIN_ID="0x4CE852";
+const ABI=[
+  {name:"createProposal",type:"function",inputs:[{name:"description",type:"string"},{name:"durationInSeconds",type:"uint256"}],outputs:[{name:"",type:"uint256"}],stateMutability:"nonpayable"},
+  {name:"vote",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"support",type:"bool"}],outputs:[],stateMutability:"nonpayable"},
+  {name:"executeProposal",type:"function",inputs:[{name:"proposalId",type:"uint256"}],outputs:[],stateMutability:"nonpayable"},
+  {name:"getProposal",type:"function",inputs:[{name:"proposalId",type:"uint256"}],outputs:[{name:"id",type:"uint256"},{name:"creator",type:"address"},{name:"description",type:"string"},{name:"yesVotes",type:"uint256"},{name:"noVotes",type:"uint256"},{name:"startTime",type:"uint256"},{name:"endTime",type:"uint256"},{name:"executed",type:"bool"},{name:"passed",type:"bool"}],stateMutability:"view"},
+  {name:"proposalCount",type:"function",inputs:[],outputs:[{name:"",type:"uint256"}],stateMutability:"view"},
+  {name:"hasUserVoted",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"user",type:"address"}],outputs:[{name:"",type:"bool"}],stateMutability:"view"}
+];
+let userAddress=null,provider=null,signer=null,proposals=[];
+const readProvider=new ethers.providers.JsonRpcProvider(RPC);
+
+function applyPreset(){
+  const v=document.getElementById("p-preset").value;
+  if(v) document.getElementById("p-hours").value=v;
+}
+function showStatus(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.className="status "+type;
+}
+function timeLeft(endTime){
+  const now=Math.floor(Date.now()/1000);
+  const diff=endTime-now;
+  if(diff<=0) return "Ended";
+  const d=Math.floor(diff/86400),h=Math.floor((diff%86400)/3600),m=Math.floor((diff%3600)/60);
+  if(d>0) return d+"d "+h+"h left";
+  if(h>0) return h+"h "+m+"m left";
+  return m+"m left";
+}
+function statusPill(p){
+  const now=Math.floor(Date.now()/1000);
+  if(p.executed) return p.passed?'<span class="pill pill-passed">Passed</span>':'<span class="pill pill-failed">Failed</span>';
+  if(now<p.endTime) return '<span class="pill pill-active">Active</span>';
+  return '<span class="pill pill-ended">Ready to execute</span>';
+}
+async function connectWallet(){
+  if(!window.ethereum){alert("MetaMask not found.");return;}
+  try{
+    const accounts=await window.ethereum.request({method:"eth_requestAccounts"});
+    userAddress=accounts[0];
+    try{
+      await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID}]});
+    }catch(e){
+      if(e.code===4902){
+        await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]});
+      }
+    }
+    provider=new ethers.providers.Web3Provider(window.ethereum);
+    signer=provider.getSigner();
+    document.getElementById("wdot").className="dot on";
+    document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);
+    document.getElementById("wbtn").textContent="Connected";
+    document.getElementById("wbtn").disabled=true;
+    document.getElementById("create-btn").disabled=false;
+    await loadProposals();
+  }catch(e){alert("Failed: "+e.message);}
+}
+async function loadProposals(){
+  try{
+    const contract=new ethers.Contract(CONTRACT,ABI,readProvider);
+    const count=await contract.proposalCount();
+    const total=count.toNumber();
+    proposals=[];
+    let active=0,executed=0;
+    for(let i=1;i<=total;i++){
+      const p=await contract.getProposal(i);
+      const now=Math.floor(Date.now()/1000);
+      const obj={id:p.id.toNumber(),creator:p.creator,description:p.description,yesVotes:p.yesVotes.toNumber(),noVotes:p.noVotes.toNumber(),startTime:p.startTime.toNumber(),endTime:p.endTime.toNumber(),executed:p.executed,passed:p.passed};
+      if(!obj.executed&&now<obj.endTime) active++;
+      if(obj.executed) executed++;
+      proposals.push(obj);
+    }
+    document.getElementById("s-total").textContent=total;
+    document.getElementById("s-active").textContent=active;
+    document.getElementById("s-executed").textContent=executed;
+    renderProposals();
+  }catch(e){console.error(e);}
+}
+async function renderProposals(){
+  const list=document.getElementById("proposals-list");
+  if(proposals.length===0){list.innerHTML='<div class="empty">No proposals yet. Create the first one!</div>';return;}
+  const contract=userAddress?new ethers.Contract(CONTRACT,ABI,readProvider):null;
+  let html="";
+  for(const p of [...proposals].reverse()){
+    const total=p.yesVotes+p.noVotes;
+    const yesPct=total>0?Math.round((p.yesVotes/total)*100):0;
+    const now=Math.floor(Date.now()/1000);
+    const isActive=!p.executed&&now<p.endTime;
+    const canExecute=!p.executed&&now>=p.endTime;
+    let voted=false;
+    if(contract&&userAddress) try{voted=await contract.hasUserVoted(p.id,userAddress);}catch(e){}
+    html+=`<div class="proposal-card">
+      <div class="proposal-header">
+        <div>
+          <div class="proposal-id">#${p.id}</div>
+          <div class="proposal-desc">${p.description}</div>
+          <div class="creator">${p.creator.slice(0,6)}...${p.creator.slice(-4)}</div>
+        </div>
+        ${statusPill(p)}
+      </div>
+      <div class="vote-counts"><span style="color:#27500A">Yes: ${p.yesVotes}</span><span style="color:#791F1F">No: ${p.noVotes}</span></div>
+      <div class="vote-bar-wrap"><div class="vote-bar-yes" style="width:${yesPct}%"></div></div>
+      <div class="countdown">${isActive?timeLeft(p.endTime):p.executed?"Executed":"Voting ended"}</div>
+      ${isActive&&userAddress&&!voted?`<div class="btn-row"><button class="btn btn-yes" onclick="castVote(${p.id},true)">Vote yes</button><button class="btn btn-no" onclick="castVote(${p.id},false)">Vote no</button></div>`:""}
+      ${isActive&&voted?`<div style="font-size:13px;color:#888;margin-top:10px">You have voted on this proposal</div>`:""}
+      ${canExecute&&userAddress?`<div style="margin-top:10px"><button class="btn" onclick="executeProposal(${p.id})">Execute proposal</button></div>`:""}
+      <div class="status" id="status-${p.id}"></div>
+    </div>`;
+  }
+  list.innerHTML=html;
+}
+async function createProposal(){
+  if(!signer) return;
+  const desc=document.getElementById("p-desc").value.trim();
+  const hours=parseInt(document.getElementById("p-hours").value);
+  if(!desc){showStatus("create-status","Please enter a description.","error");return;}
+  if(!hours||hours<1||hours>720){showStatus("create-status","Duration must be 1-720 hours.","error");return;}
+  showStatus("create-status","Submitting... confirm in MetaMask","loading");
+  try{
+    const contract=new ethers.Contract(CONTRACT,ABI,signer);
+    const tx=await contract.createProposal(desc,hours*3600);
+    showStatus("create-status","Waiting for confirmation...","loading");
+    await tx.wait();
+    showStatus("create-status","Proposal created!","success");
+    document.getElementById("p-desc").value="";
+    await loadProposals();
+  }catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error");}
+}
+async function castVote(proposalId,support){
+  if(!signer) return;
+  showStatus("status-"+proposalId,(support?"Voting yes":"Voting no")+"... confirm in MetaMask","loading");
+  try{
+    const contract=new ethers.Contract(CONTRACT,ABI,signer);
+    const tx=await contract.vote(proposalId,support);
+    await tx.wait();
+    showStatus("status-"+proposalId,"Vote recorded!","success");
+    await loadProposals();
+  }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
+}
+async function executeProposal(proposalId){
+  if(!signer) return;
+  showStatus("status-"+proposalId,"Executing... confirm in MetaMask","loading");
+  try{
+    const contract=new ethers.Contract(CONTRACT,ABI,signer);
+    const tx=await contract.executeProposal(proposalId);
+    await tx.wait();
+    showStatus("status-"+proposalId,"Executed!","success");
+    await loadProposals();
+  }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
+}
+(async()=>{
+  try{
+    const contract=new ethers.Contract(CONTRACT,ABI,readProvider);
+    const count=await contract.proposalCount();
+    document.getElementById("s-total").textContent=count.toString();
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
