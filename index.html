@@ -73,6 +73,7 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
     <div class="dot" id="wdot"></div>
     <span class="wallet-addr" id="waddr">Not connected</span>
     <button class="btn connect-btn" onclick="connectWallet()" id="wbtn">Connect wallet</button>
+<button class="btn connect-btn" onclick="disconnectWallet()" id="dbtn" style="display:none;border-color:#F09595;color:#791F1F">Disconnect</button>
   </div>
   <div class="stats">
     <div class="stat"><div class="stat-label">Total proposals</div><div class="stat-value" id="s-total">—</div></div>
@@ -152,7 +153,7 @@ async function connectWallet(){
     document.getElementById("wbtn").disabled=true;
     document.getElementById("create-btn").disabled=false;
     document.getElementById("net-warning").style.display="none";
-    await loadProposals();
+    await loadProposals();document.getElementById("dbtn").style.display="block";
   }catch(e){document.getElementById("net-warning").style.display="block";document.getElementById("net-warning").textContent=e.message||"Connection failed";}
 }
 window.ethereum&&window.ethereum.on("chainChanged",async()=>{
@@ -212,6 +213,20 @@ async function renderProposals(){
     </div>`;
   }
   list.innerHTML=html;
+}
+function disconnectWallet(){
+  userAddress=null;
+  provider=null;
+  signer=null;
+  document.getElementById("wdot").className="dot";
+  document.getElementById("waddr").textContent="Not connected";
+  document.getElementById("wbtn").textContent="Connect wallet";
+  document.getElementById("wbtn").disabled=false;
+  document.getElementById("dbtn").style.display="none";
+  document.getElementById("create-btn").disabled=true;
+  document.getElementById("proposals-list").innerHTML='<div class="empty">Connect your wallet to load proposals</div>';
+  document.getElementById("s-active").textContent="—";
+  document.getElementById("s-executed").textContent="—";
 }
 async function createProposal(){
   if(!signer)return;
