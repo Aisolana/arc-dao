@@ -33,6 +33,7 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
 .btn-no{background:#FCEBEB;color:#791F1F;border-color:#F09595}
 .btn-no:hover{background:#F7C1C1}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn-disconnect{border-color:#F09595;color:#791F1F;display:none;width:auto;padding:0 16px}
 .status{font-size:13px;padding:10px 12px;border-radius:8px;margin-top:10px;display:none}
 .status.success{background:#EAF3DE;color:#27500A;display:block}
 .status.error{background:#FCEBEB;color:#791F1F;display:block}
@@ -58,6 +59,14 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
 .connect-btn{margin-left:auto;width:auto;padding:0 16px}
 .empty{text-align:center;padding:2rem;color:#888;font-size:14px}
 .network-warning{background:#FAEEDA;color:#633806;border:0.5px solid #EF9F27;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:1rem;display:none}
+.wallet-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000}
+.wallet-modal.open{display:flex}
+.wallet-modal-inner{background:#fff;border-radius:16px;padding:1.5rem;width:320px;max-width:90vw}
+.wallet-modal-title{font-size:16px;font-weight:500;margin-bottom:1rem}
+.wallet-option{display:flex;align-items:center;gap:12px;padding:12px;border:0.5px solid #eee;border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px}
+.wallet-option:hover{background:#f5f5f5}
+.wallet-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.modal-close{width:100%;margin-top:8px;color:#888;border-color:#eee}
 </style>
 </head>
 <body>
@@ -66,14 +75,12 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
     <h1>DAO</h1>
     <span class="badge">Arc Testnet</span>
   </div>
-  <div class="network-warning" id="net-warning">
-    Wrong network detected. Please switch to Arc Testnet in MetaMask.
-  </div>
+  <div class="network-warning" id="net-warning">Wrong network. Please switch to Arc Testnet.</div>
   <div class="wallet-bar">
     <div class="dot" id="wdot"></div>
     <span class="wallet-addr" id="waddr">Not connected</span>
-    <button class="btn connect-btn" onclick="connectWallet()" id="wbtn">Connect wallet</button>
-<button class="btn connect-btn" onclick="disconnectWallet()" id="dbtn" style="display:none;border-color:#F09595;color:#791F1F">Disconnect</button>
+    <button class="btn connect-btn" onclick="openWalletModal()" id="wbtn">Connect wallet</button>
+    <button class="btn btn-disconnect" onclick="disconnectWallet()" id="dbtn">Disconnect</button>
   </div>
   <div class="stats">
     <div class="stat"><div class="stat-label">Total proposals</div><div class="stat-value" id="s-total">—</div></div>
@@ -109,6 +116,26 @@ body{font-family:system-ui,sans-serif;background:#f9f9f9;color:#111;padding:2rem
   <div class="section-label" style="margin-bottom:12px">Proposals</div>
   <div id="proposals-list"><div class="empty">Connect your wallet to load proposals</div></div>
 </div>
+
+<div class="wallet-modal" id="wallet-modal">
+  <div class="wallet-modal-inner">
+    <div class="wallet-modal-title">Connect a wallet</div>
+    <div class="wallet-option" onclick="connectWithProvider('metamask')">
+      <div class="wallet-icon" style="background:#FEF3E2">🦊</div>
+      <span>MetaMask</span>
+    </div>
+    <div class="wallet-option" onclick="connectWithProvider('coinbase')">
+      <div class="wallet-icon" style="background:#E8F0FE">🔵</div>
+      <span>Coinbase Wallet</span>
+    </div>
+    <div class="wallet-option" onclick="connectWithProvider('injected')">
+      <div class="wallet-icon" style="background:#F0F0F0">💼</div>
+      <span>Other (injected wallet)</span>
+    </div>
+    <button class="btn modal-close" onclick="closeWalletModal()">Cancel</button>
+  </div>
+</div>
+
 <script>
 const CONTRACT="0x01D6a9d7b082515cd4C9d8CD320539b913D93886";
 const RPC="https://rpc.testnet.arc.network";
@@ -124,43 +151,76 @@ const ABI=[
 ];
 let userAddress=null,provider=null,signer=null,proposals=[];
 const readProvider=new ethers.providers.JsonRpcProvider(RPC);
+
+function openWalletModal(){document.getElementById("wallet-modal").className="wallet-modal open";}
+function closeWalletModal(){document.getElementById("wallet-modal").className="wallet-modal";}
+
+async function connectWithProvider(type){
+  closeWalletModal();
+  let ethProvider=null;
+  if(type==="metamask"){
+    if(window.ethereum?.isMetaMask){ethProvider=window.ethereum;}
+    else if(window.ethereum?.providers){ethProvider=window.ethereum.providers.find(p=>p.isMetaMask);}
+    if(!ethProvider){alert("MetaMask not found. Please install it from metamask.io");return;}
+  } else if(type==="coinbase"){
+    if(window.ethereum?.isCoinbaseWallet){ethProvider=window.ethereum;}
+    else if(window.ethereum?.providers){ethProvider=window.ethereum.providers.find(p=>p.isCoinbaseWallet);}
+    if(!ethProvider){alert("Coinbase Wallet not found. Please install it.");return;}
+  } else {
+    ethProvider=window.ethereum;
+    if(!ethProvider){alert("No wallet found. Please install MetaMask or another Web3 wallet.");return;}
+  }
+  try{
+    const accounts=await ethProvider.request({method:"eth_requestAccounts"});
+    userAddress=accounts[0];
+    await ensureArcNetwork(ethProvider);
+    provider=new ethers.providers.Web3Provider(ethProvider);
+    signer=provider.getSigner();
+    document.getElementById("wdot").className="dot on";
+    document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);
+    document.getElementById("wbtn").style.display="none";
+    document.getElementById("dbtn").style.display="block";
+    document.getElementById("create-btn").disabled=false;
+    document.getElementById("net-warning").style.display="none";
+    ethProvider.on("chainChanged",()=>window.location.reload());
+    ethProvider.on("accountsChanged",(accs)=>{if(accs.length===0)disconnectWallet();else{userAddress=accs[0];document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);}});
+    await loadProposals();
+  }catch(e){
+    document.getElementById("net-warning").style.display="block";
+    document.getElementById("net-warning").textContent="Connection failed: "+(e.message||"Unknown error");
+  }
+}
+
+async function ensureArcNetwork(ethProvider){
+  const chainId=await ethProvider.request({method:"eth_chainId"});
+  if(chainId.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){
+    try{await ethProvider.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID_HEX}]});}
+    catch(e){
+      if(e.code===4902){
+        await ethProvider.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]});
+      } else throw new Error("Please switch to Arc Testnet in your wallet");
+    }
+  }
+}
+
+function disconnectWallet(){
+  userAddress=null;provider=null;signer=null;
+  document.getElementById("wdot").className="dot";
+  document.getElementById("waddr").textContent="Not connected";
+  document.getElementById("wbtn").style.display="block";
+  document.getElementById("dbtn").style.display="none";
+  document.getElementById("create-btn").disabled=true;
+  document.getElementById("net-warning").style.display="none";
+  document.getElementById("proposals-list").innerHTML='<div class="empty">Connect your wallet to load proposals</div>';
+  document.getElementById("s-active").textContent="—";
+  document.getElementById("s-executed").textContent="—";
+}
+
 function applyPreset(){const v=document.getElementById("p-preset").value;if(v)document.getElementById("p-hours").value=v;}
 function showStatus(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className="status "+type;}
 function timeLeft(endTime){const now=Math.floor(Date.now()/1000);const diff=endTime-now;if(diff<=0)return"Ended";const d=Math.floor(diff/86400),h=Math.floor((diff%86400)/3600),m=Math.floor((diff%3600)/60);if(d>0)return d+"d "+h+"h left";if(h>0)return h+"h "+m+"m left";return m+"m left";}
 function statusPill(p){const now=Math.floor(Date.now()/1000);if(p.executed)return p.passed?'<span class="pill pill-passed">Passed</span>':'<span class="pill pill-failed">Failed</span>';if(now<p.endTime)return'<span class="pill pill-active">Active</span>';return'<span class="pill pill-ended">Ready to execute</span>';}
-async function ensureArcNetwork(){
-  const chainId=await window.ethereum.request({method:"eth_chainId"});
-  if(chainId.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){
-    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID_HEX}]});}
-    catch(e){
-      if(e.code===4902){
-        await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]});
-      } else throw new Error("Please switch to Arc Testnet in MetaMask");
-    }
-  }
-  provider=new ethers.providers.Web3Provider(window.ethereum);
-  signer=provider.getSigner();
-}
-async function connectWallet(){
-  if(!window.ethereum){alert("MetaMask not found.");return;}
-  try{
-    const accounts=await window.ethereum.request({method:"eth_requestAccounts"});
-    userAddress=accounts[0];
-    await ensureArcNetwork();
-    document.getElementById("wdot").className="dot on";
-    document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);
-    document.getElementById("wbtn").textContent="Connected";
-    document.getElementById("wbtn").disabled=true;
-    document.getElementById("create-btn").disabled=false;
-    document.getElementById("net-warning").style.display="none";
-    await loadProposals();document.getElementById("dbtn").style.display="block";
-  }catch(e){document.getElementById("net-warning").style.display="block";document.getElementById("net-warning").textContent=e.message||"Connection failed";}
-}
-window.ethereum&&window.ethereum.on("chainChanged",async()=>{
-  const chainId=await window.ethereum.request({method:"eth_chainId"});
-  if(chainId.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){document.getElementById("net-warning").style.display="block";}
-  else{document.getElementById("net-warning").style.display="none";provider=new ethers.providers.Web3Provider(window.ethereum);signer=provider.getSigner();}
-});
+
 async function loadProposals(){
   try{
     const contract=new ethers.Contract(CONTRACT,ABI,readProvider);
@@ -181,6 +241,7 @@ async function loadProposals(){
     renderProposals();
   }catch(e){console.error(e);}
 }
+
 async function renderProposals(){
   const list=document.getElementById("proposals-list");
   if(proposals.length===0){list.innerHTML='<div class="empty">No proposals yet. Create the first one!</div>';return;}
@@ -214,29 +275,15 @@ async function renderProposals(){
   }
   list.innerHTML=html;
 }
-function disconnectWallet(){
-  userAddress=null;
-  provider=null;
-  signer=null;
-  document.getElementById("wdot").className="dot";
-  document.getElementById("waddr").textContent="Not connected";
-  document.getElementById("wbtn").textContent="Connect wallet";
-  document.getElementById("wbtn").disabled=false;
-  document.getElementById("dbtn").style.display="none";
-  document.getElementById("create-btn").disabled=true;
-  document.getElementById("proposals-list").innerHTML='<div class="empty">Connect your wallet to load proposals</div>';
-  document.getElementById("s-active").textContent="—";
-  document.getElementById("s-executed").textContent="—";
-}
+
 async function createProposal(){
   if(!signer)return;
   const desc=document.getElementById("p-desc").value.trim();
   const hours=parseInt(document.getElementById("p-hours").value);
   if(!desc){showStatus("create-status","Please enter a description.","error");return;}
   if(!hours||hours<1||hours>720){showStatus("create-status","Duration must be 1-720 hours.","error");return;}
-  showStatus("create-status","Submitting... confirm in MetaMask","loading");
+  showStatus("create-status","Submitting... confirm in your wallet","loading");
   try{
-    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.createProposal(desc,hours*3600);
     showStatus("create-status","Waiting for confirmation...","loading");
@@ -246,11 +293,11 @@ async function createProposal(){
     await loadProposals();
   }catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error");}
 }
+
 async function castVote(proposalId,support){
   if(!signer)return;
-  showStatus("status-"+proposalId,(support?"Voting yes":"Voting no")+"... confirm in MetaMask","loading");
+  showStatus("status-"+proposalId,(support?"Voting yes":"Voting no")+"... confirm in your wallet","loading");
   try{
-    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.vote(proposalId,support);
     await tx.wait();
@@ -258,11 +305,11 @@ async function castVote(proposalId,support){
     await loadProposals();
   }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
 }
+
 async function executeProposal(proposalId){
   if(!signer)return;
-  showStatus("status-"+proposalId,"Executing... confirm in MetaMask","loading");
+  showStatus("status-"+proposalId,"Executing... confirm in your wallet","loading");
   try{
-    await ensureArcNetwork();
     const contract=new ethers.Contract(CONTRACT,ABI,signer);
     const tx=await contract.executeProposal(proposalId);
     await tx.wait();
@@ -270,6 +317,7 @@ async function executeProposal(proposalId){
     await loadProposals();
   }catch(e){showStatus("status-"+proposalId,"Failed: "+(e.reason||e.message),"error");}
 }
+
 (async()=>{try{const contract=new ethers.Contract(CONTRACT,ABI,readProvider);const count=await contract.proposalCount();document.getElementById("s-total").textContent=count.toString();}catch(e){}})();
 </script>
 </body>
