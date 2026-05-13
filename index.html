@@ -336,3 +336,70 @@ async function execProposal(proposalId){if(!signer)return;showStatus("st-"+propo
 </script>
 </body>
 </html>
+<script>
+const CHAT_API = "http://localhost:3001/chat";
+
+function addMessage(text, isUser) {
+  const feed = document.getElementById("chat-messages");
+  if (!feed) return;
+  const msg = document.createElement("div");
+  msg.style.cssText = `max-width:85%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;${isUser ? "align-self:flex-end;background:var(--arc);color:#fff;border-bottom-right-radius:4px" : "align-self:flex-start;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px"}`;
+  msg.textContent = text;
+  feed.appendChild(msg);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  if (!input) return;
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  addMessage(message, true);
+  addMessage("thinking...", false);
+  try {
+    const res = await fetch(CHAT_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    const msgs = document.getElementById("chat-messages");
+    if (msgs) msgs.removeChild(msgs.lastChild);
+    addMessage(data.reply, false);
+  } catch (e) {
+    const msgs = document.getElementById("chat-messages");
+    if (msgs) msgs.removeChild(msgs.lastChild);
+    addMessage("Agent offline — start chat-agent.js on your server", false);
+  }
+}
+
+// Add chat UI to agent tab when it loads
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const agentTab = document.getElementById("tab-agent");
+    if (agentTab && !document.getElementById("chat-messages")) {
+      const chatCard = document.createElement("div");
+      chatCard.className = "card";
+      chatCard.style.marginTop = "1rem";
+      chatCard.innerHTML = `
+        <div class="card-title">Chat with agent</div>
+        <div id="chat-messages" style="height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;padding:4px">
+          <div style="align-self:flex-start;max-width:85%;padding:10px 14px;border-radius:12px;border-bottom-left-radius:4px;font-size:13px;line-height:1.5;background:var(--bg2);color:var(--text);border:1px solid var(--border)">
+            👋 Hi! I'm the Arc DAO Agent. Ask me anything about proposals, votes, treasury, or governance.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="chat-input"
+            placeholder="e.g. status of proposal 1, treasury balance, active proposals"
+            style="flex:1;padding:0.625rem 0.875rem;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.875rem;font-family:'DM Sans',sans-serif;outline:none"
+            onkeydown="if(event.key==='Enter')sendChat()"
+          />
+          <button class="btn btn-blue" style="width:auto;padding:0 1.25rem" onclick="sendChat()">Send</button>
+        </div>
+      `;
+      agentTab.appendChild(chatCard);
+    }
+  }, 500);
+});
+</script>
