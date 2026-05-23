@@ -6,10 +6,522 @@
 <title>Arc DAO</title>
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Aisolana/arc-dao/master/logo.png"/>
 <meta property="og:title" content="Arc DAO"/>
-<meta property="og:description" content="The DAO built for the USDC era — where AI agents govern alongside humans, on-chain, in stablecoins."/>
-<meta property="og:image" content="https://raw.githubusercontent.com/Aisolana/arc-dao/master/logo.png"/>
-<meta property="og:url" content="https://arc-dao-seven.vercel.app"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:image" content="https://raw.githubusercontent.com/Aisolana/arc-dao/master/logo.png"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<meta property="og:description" content="The DAO built for the USDC era."/>
+<meta property="og:image" content="https://raw.githubusercontent.com/Aisolana/arc-dao/master/logo.png"/><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:#050914;color:#fff;min-height:100vh;overflow-x:hidden}
+#landing{min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.land-bg{position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:140%;height:80%;background:radial-gradient(ellipse at 50% 0%,rgba(24,95,165,0.5) 0%,rgba(24,95,165,0.18) 45%,transparent 70%);pointer-events:none}
+.land-bg2{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);width:60%;height:40%;background:radial-gradient(ellipse,rgba(24,95,165,0.12) 0%,transparent 70%);pointer-events:none}
+.land-nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;position:relative;z-index:2;border-bottom:1px solid rgba(255,255,255,0.06)}
+.logo{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:500;color:#fff;letter-spacing:-0.02em;cursor:pointer}
+.logo span{color:rgba(255,255,255,0.4);font-weight:400}
+.nav-links{display:flex;align-items:center;gap:1.5rem}
+.nav-link{font-size:13px;color:rgba(255,255,255,0.5);cursor:pointer;transition:color 0.2s;background:none;border:none;font-family:'DM Sans',sans-serif}
+.nav-link:hover{color:#fff}
+.nav-btn{padding:7px 18px;border-radius:8px;background:#185FA5;color:#fff;font-size:13px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.nav-btn:hover{background:#378ADD}
+.hero{flex:1;padding:5rem 2rem 4rem;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;border:1px solid rgba(24,95,165,0.45);background:rgba(24,95,165,0.15);color:#85B7EB;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.1em;margin-bottom:2rem;animation:fadeUp 0.6s ease both}
+.epulse{width:5px;height:5px;border-radius:50%;background:#85B7EB;animation:ep 2s infinite;flex-shrink:0}
+@keyframes ep{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.5rem,7vw,4.25rem);font-weight:400;line-height:1.06;letter-spacing:-0.035em;margin-bottom:1.25rem;color:#fff;max-width:700px;animation:fadeUp 0.6s 0.1s ease both}
+.hero-title em{font-style:italic;color:rgba(255,255,255,0.4)}
+.hero-sub{font-size:15px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:2.5rem;animation:fadeUp 0.6s 0.2s ease both}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4.5rem;flex-wrap:wrap;animation:fadeUp 0.6s 0.3s ease both}
+.btn-p{padding:11px 24px;border-radius:8px;background:#185FA5;color:#fff;font-size:14px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.btn-p:hover{background:#378ADD}
+.btn-s{padding:11px 24px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);font-size:14px;border:1px solid rgba(255,255,255,0.12);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-s:hover{background:rgba(255,255,255,0.1);color:#fff}
+.stats-row{display:flex;align-items:center;justify-content:center;gap:3rem;flex-wrap:wrap;animation:fadeUp 0.6s 0.4s ease both}
+.lstat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.lstat-val{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;color:#fff;line-height:1}
+.lstat-label{font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.1em}
+.stat-div{width:1px;height:36px;background:rgba(255,255,255,0.1)}
+.ticker-section{position:relative;z-index:2;padding:2.5rem 0;border-top:1px solid rgba(255,255,255,0.06)}
+.ticker-wrap{overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);mask-image:linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)}
+.ticker-track{display:flex;gap:10px;width:max-content;animation:scroll 32s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.feat{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:1rem 1.125rem;min-width:190px;max-width:190px;flex-shrink:0;transition:border-color 0.2s;cursor:default}
+.feat:hover{border-color:rgba(24,95,165,0.5)}
+.feat-icon{font-size:1.125rem;margin-bottom:8px}
+.feat-title{font-size:12px;font-weight:500;color:#fff;margin-bottom:4px}
+.feat-desc{font-size:11px;color:rgba(255,255,255,0.38);line-height:1.5}
+#app{display:none;min-height:100vh;background:#050914}
+.app-bg{position:fixed;top:-10%;left:50%;transform:translateX(-50%);width:120%;height:50%;background:radial-gradient(ellipse at 50% 0%,rgba(24,95,165,0.2) 0%,transparent 70%);pointer-events:none;z-index:0}
+.app-nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(5,9,20,0.92);backdrop-filter:blur(12px)}
+.app-nav-right{display:flex;align-items:center;gap:8px}
+.wallet-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);font-size:12px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.5)}
+.wdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2)}
+.wdot.on{background:#639922}
+.btn-connect{padding:5px 14px;border-radius:20px;border:1px solid rgba(24,95,165,0.4);background:rgba(24,95,165,0.15);color:#85B7EB;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-connect:hover{background:#185FA5;color:#fff}
+.btn-disc{padding:5px 12px;border-radius:20px;border:1px solid rgba(201,69,69,0.3);background:rgba(201,69,69,0.08);color:#E07070;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none}
+.app-body{max-width:960px;margin:0 auto;padding:1.5rem;position:relative;z-index:1}
+.tabs{display:flex;gap:2px;margin-bottom:1.25rem;background:rgba(255,255,255,0.03);border-radius:8px;padding:3px;border:1px solid rgba(255,255,255,0.07)}
+.tab{flex:1;padding:6px;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,0.35);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all 0.2s}
+.tab.active{background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.1)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.astat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:1rem}
+.astat-label{font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+.astat-val{font-size:1.375rem;font-weight:500;color:#fff}
+.astat-val.blue{color:#85B7EB}
+.main-grid{display:grid;grid-template-columns:1fr 290px;gap:12px;align-items:start}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;margin-bottom:10px}
+.card-title{font-size:11px;font-weight:500;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem}
+.filter-row{display:flex;gap:6px;margin-bottom:1rem}
+.ftab{padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:rgba(255,255,255,0.35);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.ftab.active,.ftab:hover{background:rgba(24,95,165,0.2);color:#85B7EB;border-color:rgba(24,95,165,0.4)}
+.p-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1rem;margin-bottom:8px;transition:border-color 0.2s}
+.p-card:hover{border-color:rgba(255,255,255,0.12)}
+.p-meta{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.p-id{font-size:11px;color:rgba(255,255,255,0.25);font-family:'DM Mono',monospace}
+.p-cat{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(24,95,165,0.2);color:#85B7EB;font-weight:500}
+.p-desc{font-size:13px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:8px}
+.p-creator{font-size:11px;color:rgba(255,255,255,0.2);font-family:'DM Mono',monospace;margin-bottom:8px}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;flex-shrink:0}
+.pill-active{background:rgba(99,153,34,0.15);color:#8DC856;border:1px solid rgba(99,153,34,0.3)}
+.pill-ended{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08)}
+.pill-passed{background:rgba(24,95,165,0.15);color:#85B7EB;border:1px solid rgba(24,95,165,0.3)}
+.pill-failed{background:rgba(201,69,69,0.15);color:#E07070;border:1px solid rgba(201,69,69,0.3)}
+.pill-execute{background:rgba(201,138,26,0.15);color:#E0A840;border:1px solid rgba(201,138,26,0.3)}
+.vbars{margin:8px 0}
+.vrow{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.vlabel{font-size:10px;color:rgba(255,255,255,0.3);width:42px;text-align:right;flex-shrink:0}
+.vtrack{flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.vfill{height:100%;border-radius:2px;transition:width 0.4s}
+.bar-for{background:#639922}
+.bar-against{background:#C94545}
+.bar-abstain{background:#C98A1A}
+.vcount{font-size:10px;color:rgba(255,255,255,0.25);font-family:'DM Mono',monospace;width:16px}
+.p-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:6px}
+.p-time{font-size:11px;color:rgba(255,255,255,0.25)}
+.p-treasury{font-size:11px;color:#85B7EB;font-family:'DM Mono',monospace}
+.vote-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px}
+.vbtn{padding:5px 8px;border-radius:6px;font-size:11px;border:1px solid;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;text-align:center}
+.vbtn-for{background:rgba(99,153,34,0.1);color:#8DC856;border-color:rgba(99,153,34,0.3)}
+.vbtn-for:hover{background:rgba(99,153,34,0.2)}
+.vbtn-against{background:rgba(201,69,69,0.1);color:#E07070;border-color:rgba(201,69,69,0.3)}
+.vbtn-against:hover{background:rgba(201,69,69,0.2)}
+.vbtn-abstain{background:rgba(201,138,26,0.1);color:#E0A840;border-color:rgba(201,138,26,0.3)}
+.vbtn-abstain:hover{background:rgba(201,138,26,0.2)}
+.voted-badge{font-size:12px;color:rgba(255,255,255,0.3);margin-top:8px;padding:6px;background:rgba(255,255,255,0.03);border-radius:6px;text-align:center}
+.exec-btn{margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.exec-btn:hover{background:rgba(255,255,255,0.08);color:#fff}
+.status{font-size:12px;padding:8px 10px;border-radius:8px;margin-top:8px;display:none}
+.status.success{background:rgba(99,153,34,0.1);color:#8DC856;display:block;border:1px solid rgba(99,153,34,0.2)}
+.status.error{background:rgba(201,69,69,0.1);color:#E07070;display:block;border:1px solid rgba(201,69,69,0.2)}
+.status.loading{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);display:block}
+.empty{text-align:center;padding:3rem;color:rgba(255,255,255,0.2);font-size:13px}
+.net-warn{background:rgba(201,138,26,0.1);color:#E0A840;border:1px solid rgba(201,138,26,0.25);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:1rem;display:none}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;padding:8px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(24,95,165,0.5)}
+.field input::placeholder,.field textarea::placeholder{color:rgba(255,255,255,0.2)}
+.field textarea{height:80px;resize:vertical}
+.field select option{background:#0D1220;color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-blue{width:100%;padding:10px;border-radius:8px;border:none;background:#185FA5;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.btn-blue:hover{background:#378ADD}
+.btn-blue:disabled{opacity:0.4;cursor:not-allowed}
+.deposit-note{font-size:12px;color:rgba(255,255,255,0.25);text-align:center;margin-top:8px}
+.deposit-note span{color:#85B7EB}
+.agent-hero-card{background:rgba(24,95,165,0.08);border:1px solid rgba(24,95,165,0.25);border-radius:12px;padding:1.25rem;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.agent-av{width:40px;height:40px;border-radius:50%;background:rgba(24,95,165,0.2);border:1px solid rgba(24,95,165,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.agent-name{font-size:14px;font-weight:500;color:#fff}
+.agent-sub{font-size:11px;color:rgba(255,255,255,0.3);font-family:'DM Mono',monospace;margin-top:2px}
+.agent-live{display:flex;align-items:center;gap:5px;font-size:11px;color:#8DC856;margin-left:auto;padding:3px 10px;border-radius:20px;background:rgba(99,153,34,0.1);border:1px solid rgba(99,153,34,0.25)}
+.apulse{width:5px;height:5px;border-radius:50%;background:#639922;animation:ap 2s infinite}
+@keyframes ap{0%,100%{opacity:1}50%{opacity:0.3}}
+.agent-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.irow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.irow:last-child{border-bottom:none}
+.ir-label{font-size:12px;color:rgba(255,255,255,0.35)}
+.ir-val{font-size:12px;color:#fff;font-family:'DM Mono',monospace}
+.ir-val.green{color:#8DC856;font-family:'DM Sans',sans-serif;font-weight:500}
+.ir-val.link{color:#85B7EB;text-decoration:none;cursor:pointer}
+.feed{display:flex;flex-direction:column;gap:8px}
+.feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.vote-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.icon-for{background:rgba(99,153,34,0.1)}
+.icon-against{background:rgba(201,69,69,0.1)}
+.icon-abstain{background:rgba(201,138,26,0.1)}
+.feed-body{flex:1;min-width:0}
+.feed-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;gap:6px}
+.feed-prop{font-size:12px;font-weight:500;color:#fff}
+.feed-vlabel{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}
+.vlabel-for{background:rgba(99,153,34,0.1);color:#8DC856}
+.vlabel-against{background:rgba(201,69,69,0.1);color:#E07070}
+.vlabel-abstain{background:rgba(201,138,26,0.1);color:#E0A840}
+.feed-reason{font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;margin-bottom:4px}
+.feed-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.feed-tx{font-size:10px;color:#85B7EB;font-family:'DM Mono',monospace;text-decoration:none}
+.feed-cat{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(24,95,165,0.15);color:#85B7EB}
+.chat-msgs{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:280px;overflow-y:auto;padding-right:2px}
+.msg{padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5;max-width:88%}
+.msg-agent{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.75);border-radius:8px;border-bottom-left-radius:2px;align-self:flex-start}
+.msg-user{background:#185FA5;color:#E6F1FB;border-radius:8px;border-bottom-right-radius:2px;align-self:flex-end}
+.proposal-preview{align-self:flex-start;max-width:95%;background:rgba(24,95,165,0.1);border:1px solid rgba(24,95,165,0.3);border-radius:10px;padding:12px;font-size:12px;color:#fff;width:100%}
+.preview-title{font-size:11px;color:#85B7EB;margin-bottom:8px;font-weight:500}
+.preview-desc{margin-bottom:8px;line-height:1.5;color:rgba(255,255,255,0.85)}
+.preview-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.preview-tag{background:rgba(24,95,165,0.2);color:#85B7EB;padding:2px 8px;border-radius:4px;font-size:10px}
+.preview-warn{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:10px}
+.preview-btn{width:100%;padding:8px;border-radius:7px;border:none;background:#185FA5;color:#fff;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.preview-btn:hover{background:#378ADD}
+.preview-status{margin-top:6px;font-size:11px;color:rgba(255,255,255,0.4);text-align:center}
+.chat-row{display:flex;gap:6px}
+.chat-row input{flex:1;padding:7px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+.chat-row input::placeholder{color:rgba(255,255,255,0.2)}
+.chat-row input:focus{border-color:rgba(24,95,165,0.4)}
+.chat-send{padding:7px 14px;border-radius:8px;border:none;background:#185FA5;color:#fff;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.sug-label{font-size:10px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:0.08em;margin:10px 0 6px}
+.sug-item{padding:7px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:7px;font-size:11px;color:rgba(255,255,255,0.4);cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;transition:all 0.15s}
+.sug-item:hover{border-color:rgba(24,95,165,0.3);color:rgba(255,255,255,0.7)}
+.sug-arrow{color:rgba(255,255,255,0.2);font-size:10px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex}
+.modal{background:#0D1220;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.5rem;width:340px;max-width:90vw}
+.modal-title{font-family:'DM Serif Display',serif;font-size:1.25rem;margin-bottom:1.25rem;color:#fff}
+.wallet-opt{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;font-size:13px;color:#fff}
+.wallet-opt:hover{border-color:rgba(24,95,165,0.4);background:rgba(24,95,165,0.08)}
+.wallet-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.modal-cancel{width:100%;margin-top:4px;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+@media(max-width:640px){.nav-links{display:none}.stats4,.agent-stats{grid-template-columns:repeat(2,1fr)}.main-grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr}.vote-btns{grid-template-columns:1fr}.land-nav{padding:1rem 1.25rem}.hero{padding:3rem 1.25rem 3rem}.stats-row{gap:1.5rem}.stat-div{display:none}}
+</style>
+</head>
+<body>
+
+<div id="landing">
+  <div class="land-bg"></div>
+  <div class="land-bg2"></div>
+  <nav class="land-nav">
+    <div class="logo">Arc<span>DAO</span></div>
+    <div class="nav-links">
+      <button class="nav-link" onclick="goToApp()">Proposals</button>
+      <button class="nav-link" onclick="goToApp();setTimeout(()=>switchTab('agent',document.querySelectorAll('.tab')[2]),100)">Agent</button>
+    </div>
+    <button class="nav-btn" onclick="goToApp()">Launch App →</button>
+  </nav>
+  <div class="hero">
+    <div class="eyebrow"><span class="epulse"></span>LIVE ON ARC TESTNET</div>
+    <h1 class="hero-title">Governance, <em>reimagined</em><br/>for stablecoin era.</h1>
+    <p class="hero-sub">The DAO built for the USDC era.</p>
+    <div class="cta-row">
+      <button class="btn-p" onclick="goToApp();setTimeout(()=>switchTab('create',document.querySelectorAll('.tab')[1]),100)">Create a proposal →</button>
+      <button class="btn-s" onclick="document.getElementById('ticker-sec').scrollIntoView({behavior:'smooth'})">Learn more</button>
+    </div>
+    <div class="stats-row">
+      <div class="lstat"><div class="lstat-val" id="land-total">—</div><div class="lstat-label">Proposals</div></div>
+      <div class="stat-div"></div>
+      <div class="lstat"><div class="lstat-val" id="land-active">—</div><div class="lstat-label">Active</div></div>
+      <div class="stat-div"></div>
+      <div class="lstat"><div class="lstat-val" id="land-executed">—</div><div class="lstat-label">Executed</div></div>
+    </div>
+  </div>
+  <div class="ticker-section" id="ticker-sec">
+    <div class="ticker-wrap">
+      <div class="ticker-track">
+        <div class="feat"><div class="feat-icon">🤖</div><div class="feat-title">AI Agent voting</div><div class="feat-desc">ERC-8004 registered agent with on-chain identity, reputation 95/100, verified on Arc.</div></div>
+        <div class="feat"><div class="feat-icon">🏦</div><div class="feat-title">On-chain treasury</div><div class="feat-desc">Proposals move USDC from the DAO treasury automatically when they pass quorum.</div></div>
+        <div class="feat"><div class="feat-icon">🗳️</div><div class="feat-title">Three-way voting</div><div class="feat-desc">Vote For, Against, or Abstain — nuanced governance reflecting real community sentiment.</div></div>
+        <div class="feat"><div class="feat-icon">⏱️</div><div class="feat-title">Flexible duration</div><div class="feat-desc">Proposal creators set voting duration from 1 hour to 30 days.</div></div>
+        <div class="feat"><div class="feat-icon">🏷️</div><div class="feat-title">Categories</div><div class="feat-desc">Governance, Treasury, Technical, Community, or Other.</div></div>
+        <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">Powered by Arc</div><div class="feat-desc">USDC gas fees, sub-second finality, Circle Agent Wallets.</div></div>
+        <div class="feat"><div class="feat-icon">🤖</div><div class="feat-title">AI Agent voting</div><div class="feat-desc">ERC-8004 registered agent with on-chain identity, reputation 95/100, verified on Arc.</div></div>
+        <div class="feat"><div class="feat-icon">🏦</div><div class="feat-title">On-chain treasury</div><div class="feat-desc">Proposals move USDC from the DAO treasury automatically when they pass quorum.</div></div>
+        <div class="feat"><div class="feat-icon">🗳️</div><div class="feat-title">Three-way voting</div><div class="feat-desc">Vote For, Against, or Abstain — nuanced governance reflecting real community sentiment.</div></div>
+        <div class="feat"><div class="feat-icon">⏱️</div><div class="feat-title">Flexible duration</div><div class="feat-desc">Proposal creators set voting duration from 1 hour to 30 days.</div></div>
+        <div class="feat"><div class="feat-icon">🏷️</div><div class="feat-title">Categories</div><div class="feat-desc">Governance, Treasury, Technical, Community, or Other.</div></div>
+        <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">Powered by Arc</div><div class="feat-desc">USDC gas fees, sub-second finality, Circle Agent Wallets.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="app-bg"></div>
+  <nav class="app-nav">
+    <div class="logo" onclick="goToLanding()">Arc<span>DAO</span></div>
+    <div class="app-nav-right">
+      <div class="wallet-pill"><div class="wdot" id="wdot"></div><span id="waddr">Not connected</span></div>
+      <button class="btn-connect" onclick="openModal()" id="wbtn">Connect</button>
+      <button class="btn-disc" onclick="disconnectWallet()" id="dbtn">Disconnect</button>
+    </div>
+  </nav>
+  <div class="app-body">
+    <div class="net-warn" id="net-warn">⚠️ Wrong network — please switch to Arc Testnet.</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('proposals',this)">Proposals</button>
+      <button class="tab" onclick="switchTab('create',this)">Create</button>
+      <button class="tab" onclick="switchTab('agent',this)">🤖 Agent</button>
+    </div>
+
+    <div class="tab-content active" id="tab-proposals">
+      <div class="stats4">
+        <div class="astat"><div class="astat-label">Proposals</div><div class="astat-val blue" id="s-total">—</div></div>
+        <div class="astat"><div class="astat-label">Active</div><div class="astat-val" id="s-active">—</div></div>
+        <div class="astat"><div class="astat-label">Executed</div><div class="astat-val" id="s-executed">—</div></div>
+        <div class="astat"><div class="astat-label">Treasury</div><div class="astat-val" style="font-size:1rem;padding-top:2px" id="s-treasury">—</div></div>
+      </div>
+      <div class="main-grid">
+        <div>
+          <div class="filter-row">
+            <button class="ftab active" onclick="setFilter('all',this)">All</button>
+            <button class="ftab" onclick="setFilter('active',this)">Active</button>
+            <button class="ftab" onclick="setFilter('passed',this)">Passed</button>
+            <button class="ftab" onclick="setFilter('failed',this)">Failed</button>
+          </div>
+          <div id="proposals-list"><div class="empty">Connect your wallet to load proposals</div></div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">Agent</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+              <div class="agent-av" style="width:32px;height:32px;font-size:14px">🤖</div>
+              <div><div style="font-size:13px;font-weight:500">Arc DAO Agent</div><div style="font-size:11px;color:rgba(255,255,255,0.3);font-family:'DM Mono',monospace">0x1510...77ae</div></div>
+              <div class="agent-live" style="margin-left:auto"><div class="apulse"></div>Live</div>
+            </div>
+            <div class="irow"><span class="ir-label">ERC-8004 ID</span><span class="ir-val">#6623</span></div>
+            <div class="irow"><span class="ir-label">Reputation</span><span class="ir-val green">95 / 100</span></div>
+            <div class="irow"><span class="ir-label">Votes cast</span><span class="ir-val">4</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Chat with agent</div>
+            <div class="chat-msgs" id="sp-msgs">
+              <div class="msg msg-agent">Hi! Ask me anything or say "create a proposal to..." and I'll help you draft one.</div>
+            </div>
+            <div class="chat-row">
+              <input type="text" id="sp-input" placeholder="Ask or create a proposal..." onkeydown="if(event.key==='Enter')sendChat('sp')"/>
+              <button class="chat-send" onclick="sendChat('sp')">Send</button>
+            </div>
+            <div class="sug-label">Try asking</div>
+            <div class="sug-item" onclick="fillChat('sp','treasury balance')">treasury balance <span class="sug-arrow">→</span></div>
+            <div class="sug-item" onclick="fillChat('sp','create a proposal to fund community sprint with 50 USDC for 3 days')">create a proposal... <span class="sug-arrow">→</span></div>
+            <div class="sug-item" onclick="fillChat('sp','what proposals are active?')">what proposals are active? <span class="sug-arrow">→</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-create">
+      <div class="card">
+        <div class="card-title">Create proposal</div>
+        <div class="field"><label>Description</label><textarea id="p-desc" placeholder="Describe your proposal clearly..."></textarea></div>
+        <div class="row2">
+          <div class="field"><label>Category</label>
+            <select id="p-cat">
+              <option value="0">Governance</option><option value="1">Treasury</option>
+              <option value="2">Technical</option><option value="3">Community</option><option value="4">Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Voting duration</label>
+            <select id="p-dur" onchange="customDur()">
+              <option value="3600">1 hour</option><option value="86400">1 day</option>
+              <option value="259200" selected>3 days</option><option value="604800">1 week</option>
+              <option value="2592000">30 days</option><option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="custom-dur-wrap" style="display:none"><label>Custom hours</label><input type="number" id="p-custom-hrs" placeholder="e.g. 48" min="1" max="720"/></div>
+        <div class="field"><label>Quorum (min votes to pass)</label><input type="number" id="p-quorum" value="3" min="1"/></div>
+        <div class="card-title" style="margin-top:1rem">Treasury request (optional)</div>
+        <div class="row2">
+          <div class="field"><label>Send USDC to</label><input type="text" id="p-taddr" placeholder="0x..."/></div>
+          <div class="field"><label>Amount (USDC)</label><input type="number" id="p-tamt" value="0" min="0"/></div>
+        </div>
+        <button class="btn-blue" id="create-btn" onclick="createProposal()" disabled>Submit proposal</button>
+        <div class="deposit-note">Requires <span>20 USDC deposit</span> → goes to treasury</div>
+        <div class="status" id="create-status"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-agent">
+      <div class="agent-hero-card">
+        <div class="agent-av">🤖</div>
+        <div><div class="agent-name">Arc DAO Agent</div><div class="agent-sub">0x1510...77ae</div></div>
+        <div class="agent-live"><div class="apulse"></div>Active</div>
+      </div>
+      <div class="agent-stats">
+        <div class="astat"><div class="astat-label">Total votes</div><div class="astat-val">4</div></div>
+        <div class="astat"><div class="astat-label">For</div><div class="astat-val" style="color:#8DC856">3</div></div>
+        <div class="astat"><div class="astat-label">Against</div><div class="astat-val" style="color:#E07070">0</div></div>
+        <div class="astat"><div class="astat-label">Abstain</div><div class="astat-val" style="color:#E0A840">1</div></div>
+      </div>
+      <div class="main-grid">
+        <div>
+          <div class="card">
+            <div class="card-title">Agent identity</div>
+            <div class="irow"><span class="ir-label">Wallet</span><a class="ir-val link" href="https://testnet.arcscan.app/address/0x15104351612381033109a4f1bd946bf2c00877ae" target="_blank">0x1510...77ae ↗</a></div>
+            <div class="irow"><span class="ir-label">ERC-8004 Agent ID</span><span class="ir-val">#6623</span></div>
+            <div class="irow"><span class="ir-label">Reputation score</span><span class="ir-val green">95 / 100</span></div>
+            <div class="irow"><span class="ir-label">Validation</span><span class="ir-val" style="color:#8DC856;font-family:'DM Sans',sans-serif">✅ arc_dao_verified</span></div>
+            <div class="irow"><span class="ir-label">AI brain</span><span class="ir-val">Groq — Llama 3.3 70B</span></div>
+            <div class="irow"><span class="ir-label">Wallet provider</span><span class="ir-val">Circle Agent Wallets</span></div>
+            <div class="irow"><span class="ir-label">Cycle interval</span><span class="ir-val">Every 60 seconds</span></div>
+            <div class="irow"><span class="ir-label">Identity registry</span><a class="ir-val link" href="https://testnet.arcscan.app/address/0x8004A818BFB912233c491871b3d84c89A494BD9e" target="_blank">0x8004A8...BD9e ↗</a></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Vote activity</div>
+            <div class="feed">
+              <div class="feed-item"><div class="vote-icon icon-for">👍</div><div class="feed-body"><div class="feed-top"><span class="feed-prop">Proposal #1</span><span class="feed-vlabel vlabel-for">For</span></div><div class="feed-reason">"Clear and specific — benefits the DAO by funding educational content creation to grow the Arc community."</div><div class="feed-meta"><span class="feed-cat">Community</span><a class="feed-tx" href="https://testnet.arcscan.app/tx/0xb2f93773e5874621f798d7dc24110d902ad175fc227e6f57f7835d53c0f3591c" target="_blank">0xb2f9...591c ↗</a></div></div></div>
+              <div class="feed-item"><div class="vote-icon icon-for">👍</div><div class="feed-body"><div class="feed-top"><span class="feed-prop">Proposal #2</span><span class="feed-vlabel vlabel-for">For</span></div><div class="feed-reason">"Promotes educational content creation about building on Arc, growing the community and ecosystem."</div><div class="feed-meta"><span class="feed-cat">Community</span><a class="feed-tx" href="https://testnet.arcscan.app/tx/0xb06612ecf0e7d61c055031938e1a4f833a5219af9079cbed948932d8b4dc0966" target="_blank">0xb066...0966 ↗</a></div></div></div>
+              <div class="feed-item"><div class="vote-icon icon-for">👍</div><div class="feed-body"><div class="feed-top"><span class="feed-prop">Proposal #3</span><span class="feed-vlabel vlabel-for">For</span></div><div class="feed-reason">"Promotes educational content creation about building on Arc, growing the community and ecosystem."</div><div class="feed-meta"><span class="feed-cat">Community</span><a class="feed-tx" href="https://testnet.arcscan.app/tx/0x1721820c933cb598c661d23ab05c9da8fe13f63658649fbc2d7a3d308ad0dc23" target="_blank">0x1721...dc23 ↗</a></div></div></div>
+              <div class="feed-item"><div class="vote-icon icon-abstain">🤚</div><div class="feed-body"><div class="feed-top"><span class="feed-prop">Proposal #4</span><span class="feed-vlabel vlabel-abstain">Abstain</span></div><div class="feed-reason">"Lacks specificity on how the described services benefit the DAO — no clear outcomes or success metrics."</div><div class="feed-meta"><span class="feed-cat">Governance</span><a class="feed-tx" href="https://testnet.arcscan.app/tx/0x7ec8c42b8d7fa5dfe6167628036006d82eb26ccd6af6c3abd4199f5221feee7b" target="_blank">0x7ec8...eeb7 ↗</a></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">Chat with agent</div>
+            <div class="chat-msgs" id="ag-msgs">
+              <div class="msg msg-agent">Hi! Ask me about proposals, treasury, or say "create a proposal to..." and I'll draft it for you.</div>
+            </div>
+            <div class="chat-row">
+              <input type="text" id="ag-input" placeholder="Ask or create a proposal..." onkeydown="if(event.key==='Enter')sendChat('ag')"/>
+              <button class="chat-send" onclick="sendChat('ag')">Send</button>
+            </div>
+            <div class="sug-label">Try asking</div>
+            <div class="sug-item" onclick="fillChat('ag','treasury balance')">treasury balance <span class="sug-arrow">→</span></div>
+            <div class="sug-item" onclick="fillChat('ag','create a proposal to fund community sprint with 50 USDC for 3 days')">create a proposal... <span class="sug-arrow">→</span></div>
+            <div class="sug-item" onclick="fillChat('ag','status of proposal 1')">status of proposal 1 <span class="sug-arrow">→</span></div>
+            <div class="sug-item" onclick="fillChat('ag','tell me about yourself')">tell me about yourself <span class="sug-arrow">→</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Connect wallet</div>
+    <div class="wallet-opt" onclick="connectWith('metamask')"><div class="wallet-icon" style="background:rgba(254,243,226,0.1)">🦊</div><div><div style="font-weight:500">MetaMask</div><div style="font-size:12px;color:rgba(255,255,255,0.3)">Browser extension</div></div></div>
+    <div class="wallet-opt" onclick="connectWith('coinbase')"><div class="wallet-icon" style="background:rgba(232,240,254,0.1)">🔵</div><div><div style="font-weight:500">Coinbase Wallet</div><div style="font-size:12px;color:rgba(255,255,255,0.3)">Browser extension</div></div></div>
+    <div class="wallet-opt" onclick="connectWith('injected')"><div class="wallet-icon" style="background:rgba(255,255,255,0.05)">💼</div><div><div style="font-weight:500">Other wallet</div><div style="font-size:12px;color:rgba(255,255,255,0.3)">Any injected provider</div></div></div>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const CONTRACT="0xBa3478D309D48e651bbAc8d07245a0D5FB64ec8B";
+const RPC="https://arc-testnet.drpc.org";
+const CHAIN_ID_HEX="0x"+Number(5042002).toString(16);
+const CATS=["Governance","Treasury","Technical","Community","Other"];
+const CHAT_API="https://arc-dao-agent-production.up.railway.app/chat";
+const ABI=[{name:"createProposal",type:"function",inputs:[{name:"description",type:"string"},{name:"durationInSeconds",type:"uint256"},{name:"category",type:"uint8"},{name:"quorum",type:"uint256"},{name:"treasuryTarget",type:"address"},{name:"treasuryAmount",type:"uint256"}],outputs:[{name:"",type:"uint256"}],stateMutability:"nonpayable"},{name:"vote",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"voteType",type:"uint8"}],outputs:[],stateMutability:"nonpayable"},{name:"executeProposal",type:"function",inputs:[{name:"proposalId",type:"uint256"}],outputs:[],stateMutability:"nonpayable"},{name:"getProposalCore",type:"function",inputs:[{name:"proposalId",type:"uint256"}],outputs:[{name:"id",type:"uint256"},{name:"creator",type:"address"},{name:"description",type:"string"},{name:"category",type:"uint8"},{name:"executed",type:"bool"},{name:"passed",type:"bool"}],stateMutability:"view"},{name:"getProposalVotes",type:"function",inputs:[{name:"proposalId",type:"uint256"}],outputs:[{name:"forVotes",type:"uint256"},{name:"againstVotes",type:"uint256"},{name:"abstainVotes",type:"uint256"},{name:"quorum",type:"uint256"},{name:"startTime",type:"uint256"},{name:"endTime",type:"uint256"},{name:"treasuryTarget",type:"address"},{name:"treasuryAmount",type:"uint256"}],stateMutability:"view"},{name:"proposalCount",type:"function",inputs:[],outputs:[{name:"",type:"uint256"}],stateMutability:"view"},{name:"hasUserVoted",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"user",type:"address"}],outputs:[{name:"",type:"bool"}],stateMutability:"view"},{name:"getUserVote",type:"function",inputs:[{name:"proposalId",type:"uint256"},{name:"user",type:"address"}],outputs:[{name:"",type:"uint8"}],stateMutability:"view"},{name:"getTreasuryBalance",type:"function",inputs:[],outputs:[{name:"",type:"uint256"}],stateMutability:"view"}];
+let userAddress=null,provider=null,signer=null,proposals=[],currentFilter="all";
+const readProvider=new ethers.providers.JsonRpcProvider(RPC);
+
+function goToApp(){document.getElementById("landing").style.display="none";document.getElementById("app").style.display="block";loadProposals()}
+function goToLanding(){document.getElementById("app").style.display="none";document.getElementById("landing").style.display="block"}
+function switchTab(name,el){document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));el.classList.add("active");document.getElementById("tab-"+name).classList.add("active")}
+function customDur(){document.getElementById("custom-dur-wrap").style.display=document.getElementById("p-dur").value==="custom"?"block":"none"}
+function getDuration(){const v=document.getElementById("p-dur").value;if(v==="custom"){const h=parseInt(document.getElementById("p-custom-hrs").value)||0;return h*3600}return parseInt(v)}
+function openModal(){document.getElementById("modal").className="modal-overlay open"}
+function closeModal(){document.getElementById("modal").className="modal-overlay"}
+function showStatus(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className="status "+type}
+function timeLeft(endTime){const now=Math.floor(Date.now()/1000),diff=endTime-now;if(diff<=0)return"Ended";const d=Math.floor(diff/86400),h=Math.floor((diff%86400)/3600),m=Math.floor((diff%3600)/60);if(d>0)return d+"d "+h+"h left";if(h>0)return h+"h "+m+"m left";return m+"m left"}
+function statusPill(p){const now=Math.floor(Date.now()/1000);if(p.executed)return p.passed?'<span class="pill pill-passed">Passed</span>':'<span class="pill pill-failed">Failed</span>';if(now>=p.endTime)return'<span class="pill pill-execute">Ready</span>';return'<span class="pill pill-active">Active</span>'}
+function barPct(val,total){return total>0?Math.round((val/total)*100):0}
+
+async function ensureNetwork(ep){const cid=await ep.request({method:"eth_chainId"});if(cid.toLowerCase()!==CHAIN_ID_HEX.toLowerCase()){try{await ep.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID_HEX}]})}catch(e){if(e.code===4902){await ep.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:6},rpcUrls:[RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}}}}
+
+async function connectWith(type){closeModal();let ep=null;if(type==="metamask"){ep=window.ethereum?.isMetaMask?window.ethereum:window.ethereum?.providers?.find(p=>p.isMetaMask);if(!ep){alert("MetaMask not found.");return}}else if(type==="coinbase"){ep=window.ethereum?.isCoinbaseWallet?window.ethereum:window.ethereum?.providers?.find(p=>p.isCoinbaseWallet);if(!ep){alert("Coinbase Wallet not found.");return}}else{ep=window.ethereum;if(!ep){alert("No wallet found.");return}}try{const accounts=await ep.request({method:"eth_requestAccounts"});userAddress=accounts[0];await ensureNetwork(ep);provider=new ethers.providers.Web3Provider(ep);signer=provider.getSigner();document.getElementById("wdot").className="wdot on";document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4);document.getElementById("wbtn").style.display="none";document.getElementById("dbtn").style.display="block";document.getElementById("create-btn").disabled=false;document.getElementById("net-warn").style.display="none";ep.on("chainChanged",()=>window.location.reload());ep.on("accountsChanged",a=>{if(!a.length)disconnectWallet();else{userAddress=a[0];document.getElementById("waddr").textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4)}});await loadProposals()}catch(e){document.getElementById("net-warn").style.display="block";document.getElementById("net-warn").textContent="⚠️ "+(e.message||"Connection failed")}}
+
+function disconnectWallet(){userAddress=null;provider=null;signer=null;document.getElementById("wdot").className="wdot";document.getElementById("waddr").textContent="Not connected";document.getElementById("wbtn").style.display="block";document.getElementById("dbtn").style.display="none";document.getElementById("create-btn").disabled=true;document.getElementById("net-warn").style.display="none";document.getElementById("proposals-list").innerHTML='<div class="empty">Connect your wallet to load proposals</div>';document.getElementById("s-active").textContent="—";document.getElementById("s-executed").textContent="—"}
+function setFilter(f,el){currentFilter=f;document.querySelectorAll(".ftab").forEach(t=>t.classList.remove("active"));el.classList.add("active");renderProposals()}
+function filterProposals(){const now=Math.floor(Date.now()/1000);if(currentFilter==="all")return proposals;if(currentFilter==="active")return proposals.filter(p=>!p.executed&&now<p.endTime);if(currentFilter==="passed")return proposals.filter(p=>p.executed&&p.passed);if(currentFilter==="failed")return proposals.filter(p=>p.executed&&!p.passed);return proposals}
+
+async function loadProposals(){try{const c=new ethers.Contract(CONTRACT,ABI,readProvider);const count=(await c.proposalCount()).toNumber();proposals=[];let active=0,executed=0;for(let i=1;i<=count;i++){const core=await c.getProposalCore(i);const votes=await c.getProposalVotes(i);const now=Math.floor(Date.now()/1000);const obj={id:core.id.toNumber(),creator:core.creator,description:core.description,category:core.category,executed:core.executed,passed:core.passed,forVotes:votes.forVotes.toNumber(),againstVotes:votes.againstVotes.toNumber(),abstainVotes:votes.abstainVotes.toNumber(),quorum:votes.quorum.toNumber(),startTime:votes.startTime.toNumber(),endTime:votes.endTime.toNumber(),treasuryTarget:votes.treasuryTarget,treasuryAmount:votes.treasuryAmount.toString()};if(!obj.executed&&now<obj.endTime)active++;if(obj.executed)executed++;proposals.push(obj)}document.getElementById("s-total").textContent=count;document.getElementById("s-active").textContent=active;document.getElementById("s-executed").textContent=executed;document.getElementById("land-total").textContent=count;document.getElementById("land-active").textContent=active;document.getElementById("land-executed").textContent=executed;try{const bal=await c.getTreasuryBalance();document.getElementById("s-treasury").textContent=parseFloat(ethers.utils.formatUnits(bal,6)).toFixed(2)+" USDC"}catch(e){document.getElementById("s-treasury").textContent="0 USDC"}renderProposals()}catch(e){console.error(e)}}
+
+async function renderProposals(){const list=document.getElementById("proposals-list");const filtered=filterProposals();if(filtered.length===0){list.innerHTML='<div class="empty">No proposals found</div>';return}const c=userAddress?new ethers.Contract(CONTRACT,ABI,readProvider):null;let html="";for(const p of [...filtered].reverse()){const total=p.forVotes+p.againstVotes+p.abstainVotes;const now=Math.floor(Date.now()/1000);const isActive=!p.executed&&now<p.endTime;const canExecute=!p.executed&&now>=p.endTime;let voted=false,userVoteType=-1;if(c&&userAddress){try{voted=await c.hasUserVoted(p.id,userAddress);if(voted)userVoteType=await c.getUserVote(p.id,userAddress)}catch(e){}}const voteLabels=["For","Against","Abstain"];const hasTreasury=p.treasuryAmount!=="0"&&p.treasuryTarget!=="0x0000000000000000000000000000000000000000";const quorumMet=total>=p.quorum;html+=`<div class="p-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px"><div style="flex:1"><div class="p-meta"><span class="p-id">#${p.id}</span><span class="p-cat">${CATS[p.category]||"Other"}</span>${hasTreasury?'<span style="font-size:10px;color:#85B7EB">💰</span>':""}</div><div class="p-desc">${p.description}</div><div class="p-creator">${p.creator.slice(0,6)}...${p.creator.slice(-4)}</div></div>${statusPill(p)}</div><div class="vbars"><div class="vrow"><div class="vlabel">For</div><div class="vtrack"><div class="vfill bar-for" style="width:${barPct(p.forVotes,total)}%"></div></div><div class="vcount">${p.forVotes}</div></div><div class="vrow"><div class="vlabel">Against</div><div class="vtrack"><div class="vfill bar-against" style="width:${barPct(p.againstVotes,total)}%"></div></div><div class="vcount">${p.againstVotes}</div></div><div class="vrow"><div class="vlabel">Abstain</div><div class="vtrack"><div class="vfill bar-abstain" style="width:${barPct(p.abstainVotes,total)}%"></div></div><div class="vcount">${p.abstainVotes}</div></div></div><div class="p-footer"><div class="p-time">Quorum: ${total}/${p.quorum} ${quorumMet?"✅":""} · ${isActive?timeLeft(p.endTime):p.executed?"Executed":"Voting ended"}</div>${hasTreasury?`<div class="p-treasury">💸 ${ethers.utils.formatUnits(p.treasuryAmount,6)} USDC</div>`:""}</div>${isActive&&userAddress&&!voted?`<div class="vote-btns"><button class="vbtn vbtn-for" onclick="castVote(${p.id},0)">👍 For</button><button class="vbtn vbtn-against" onclick="castVote(${p.id},1)">👎 Against</button><button class="vbtn vbtn-abstain" onclick="castVote(${p.id},2)">🤚 Abstain</button></div>`:""}${voted?`<div class="voted-badge">You voted: <strong>${voteLabels[userVoteType]||"—"}</strong></div>`:""}${canExecute&&userAddress?`<button class="exec-btn" onclick="execProposal(${p.id})">Execute proposal</button>`:""}<div class="status" id="st-${p.id}"></div></div>`}list.innerHTML=html}
+
+async function createProposal(){if(!signer)return;const desc=document.getElementById("p-desc").value.trim();const cat=parseInt(document.getElementById("p-cat").value);const dur=getDuration();const quorum=parseInt(document.getElementById("p-quorum").value)||1;const tAddr=document.getElementById("p-taddr").value.trim()||"0x0000000000000000000000000000000000000000";const tAmt=document.getElementById("p-tamt").value||"0";if(!desc){showStatus("create-status","Please enter a description.","error");return}if(dur<3600){showStatus("create-status","Minimum duration is 1 hour.","error");return}const tAmtWei=ethers.utils.parseUnits(tAmt,6);showStatus("create-status","Step 1/2: Approving 20 USDC... confirm in wallet","loading");try{const usdcAbi=["function approve(address spender, uint256 amount) returns (bool)"];const usdcContract=new ethers.Contract("0x3600000000000000000000000000000000000000",usdcAbi,signer);const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("20",6));await approveTx.wait();showStatus("create-status","Step 2/2: Creating proposal... confirm in wallet","loading");const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.createProposal(desc,dur,cat,quorum,tAddr,tAmtWei);showStatus("create-status","Waiting for confirmation...","loading");await tx.wait();showStatus("create-status","✅ Proposal created!","success");document.getElementById("p-desc").value="";await loadProposals()}catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error")}}
+
+async function castVote(proposalId,voteType){if(!signer)return;const labels=["For","Against","Abstain"];showStatus("st-"+proposalId,"Voting "+labels[voteType]+"... confirm in wallet","loading");try{const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.vote(proposalId,voteType);await tx.wait();showStatus("st-"+proposalId,"✅ Vote recorded on-chain!","success");await loadProposals()}catch(e){showStatus("st-"+proposalId,"Failed: "+(e.reason||e.message),"error")}}
+
+async function execProposal(proposalId){if(!signer)return;showStatus("st-"+proposalId,"Executing... confirm in wallet","loading");try{const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.executeProposal(proposalId);await tx.wait();showStatus("st-"+proposalId,"✅ Executed!","success");await loadProposals()}catch(e){showStatus("st-"+proposalId,"Failed: "+(e.reason||e.message),"error")}}
+
+function addMsg(msgsId,text,isUser){const feed=document.getElementById(msgsId);if(!feed)return;const msg=document.createElement("div");msg.className="msg "+(isUser?"msg-user":"msg-agent");msg.textContent=text;feed.appendChild(msg);feed.scrollTop=feed.scrollHeight}
+
+async function sendChat(prefix){
+  const input=document.getElementById(prefix+"-input");
+  const msgsId=prefix+"-msgs";
+  if(!input)return;
+  const message=input.value.trim();
+  if(!message)return;
+  input.value="";
+  addMsg(msgsId,message,true);
+  addMsg(msgsId,"thinking...",false);
+  try{
+    const res=await fetch(CHAT_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message})});
+    const data=await res.json();
+    const feed=document.getElementById(msgsId);
+    if(feed&&feed.lastChild)feed.removeChild(feed.lastChild);
+    if(data.type==="create_proposal"){
+      const p=data.data;
+      const card=document.createElement("div");
+      card.className="proposal-preview";
+      const statusId="preview-status-"+Date.now();
+      card.innerHTML=`
+        <div class="preview-title">📋 PROPOSAL PREVIEW</div>
+        <div class="preview-desc">${p.description}</div>
+        <div class="preview-tags">
+          <span class="preview-tag">${CATS[p.category]||"Other"}</span>
+          <span class="preview-tag">${p.duration_hours}h voting</span>
+          <span class="preview-tag">Quorum: ${p.quorum}</span>
+          ${p.treasury_amount&&p.treasury_amount!=="0"?`<span class="preview-tag">💸 ${p.treasury_amount} USDC</span>`:""}
+        </div>
+        <div class="preview-warn">⚠️ Requires 20 USDC deposit from your wallet</div>
+        <button class="preview-btn" onclick="submitProposalFromChat(${JSON.stringify(p).replace(/"/g,"'")}, '${statusId}')">Create this proposal →</button>
+        <div class="preview-status" id="${statusId}"></div>
+      `;
+      if(feed){feed.appendChild(card);feed.scrollTop=feed.scrollHeight}
+    } else {
+      addMsg(msgsId,data.reply||data.text||JSON.stringify(data),false);
+    }
+  }catch(e){
+    const feed=document.getElementById(msgsId);
+    if(feed&&feed.lastChild)feed.removeChild(feed.lastChild);
+    addMsg(msgsId,"Agent offline — check Railway deployment",false);
+  }
+}
+
+async function submitProposalFromChat(p,statusId){
+  const statusEl=document.getElementById(statusId);
+  if(!signer){if(statusEl)statusEl.innerHTML='<span style="color:#E0A840">⚠️ Connect your wallet first</span>';return}
+  try{
+    if(statusEl)statusEl.textContent="Step 1/2: Approving 20 USDC...";
+    const usdcAbi=["function approve(address spender, uint256 amount) returns (bool)"];
+    const usdcContract=new ethers.Contract("0x3600000000000000000000000000000000000000",usdcAbi,signer);
+    const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("20",6));
+    await approveTx.wait();
+    if(statusEl)statusEl.textContent="Step 2/2: Creating proposal...";
+    const tAddr=p.treasury_address||"0x0000000000000000000000000000000000000000";
+    const tAmt=ethers.utils.parseUnits(String(p.treasury_amount||"0"),6);
+    const dur=(p.duration_hours||72)*3600;
+    const c=new ethers.Contract(CONTRACT,ABI,signer);
+    const tx=await c.createProposal(p.description,dur,p.category||0,p.quorum||3,tAddr,tAmt);
+    await tx.wait();
+    if(statusEl)statusEl.innerHTML='<span style="color:#8DC856">✅ Proposal created on-chain!</span>';
+    await loadProposals();
+  }catch(e){
+    if(statusEl)statusEl.innerHTML=`<span style="color:#E07070">Failed: ${e.reason||e.message}</span>`;
+  }
+}
+
+function fillChat(prefix,text){const input=document.getElementById(prefix+"-input");if(input){input.value=text;input.focus()}}
+
+(async()=>{try{const c=new ethers.Contract(CONTRACT,ABI,readProvider);const count=await c.proposalCount();const n=count.toNumber();document.getElementById("land-total").textContent=n;document.getElementById("s-total").textContent=n;let active=0,executed=0;for(let i=1;i<=n;i++){try{const core=await c.getProposalCore(i);const votes=await c.getProposalVotes(i);const now=Math.floor(Date.now()/1000);if(!core.executed&&now<votes.endTime.toNumber())active++;if(core.executed)executed++}catch(e){}}document.getElementById("land-active").textContent=active;document.getElementById("land-executed").textContent=executed;document.getElementById("s-active").textContent=active;document.getElementById("s-executed").textContent=executed;try{const bal=await c.getTreasuryBalance();document.getElementById("s-treasury").textContent=parseFloat(ethers.utils.formatUnits(bal,6)).toFixed(2)+" USDC"}catch(e){}}catch(e){}})();
+</script>
+</body>
+</html>
