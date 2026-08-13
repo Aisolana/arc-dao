@@ -339,7 +339,7 @@ body{font-family:'DM Sans',sans-serif;background:#050914;color:#fff;min-height:1
           <div class="field"><label>Amount (USDC)</label><input type="number" id="p-tamt" value="0" min="0"/></div>
         </div>
         <button class="btn-blue" id="create-btn" onclick="createProposal()" disabled>Submit proposal</button>
-        <div class="deposit-note">Requires <span>20 USDC deposit</span> → goes to treasury</div>
+        <div class="deposit-note">Requires <span>0.5 USDC deposit</span> → goes to treasury</div>
         <div class="status" id="create-status"></div>
       </div>
     </div>
@@ -412,7 +412,7 @@ body{font-family:'DM Sans',sans-serif;background:#050914;color:#fff;min-height:1
 </div>
 
 <script>
-const CONTRACT="0xBa3478D309D48e651bbAc8d07245a0D5FB64ec8B";
+const CONTRACT="0x9ae03cE82277BFe156848d56aCea568A3510AD5B";
 const RPC="https://arc-testnet.drpc.org";
 const CHAIN_ID_HEX="0x"+Number(5042002).toString(16);
 const CATS=["Governance","Treasury","Technical","Community","Other"];
@@ -445,7 +445,7 @@ async function loadProposals(){try{const c=new ethers.Contract(CONTRACT,ABI,read
 
 async function renderProposals(){const list=document.getElementById("proposals-list");const filtered=filterProposals();if(filtered.length===0){list.innerHTML='<div class="empty">No proposals found</div>';return}const c=userAddress?new ethers.Contract(CONTRACT,ABI,readProvider):null;let html="";for(const p of [...filtered].reverse()){const total=p.forVotes+p.againstVotes+p.abstainVotes;const now=Math.floor(Date.now()/1000);const isActive=!p.executed&&now<p.endTime;const canExecute=!p.executed&&now>=p.endTime;let voted=false,userVoteType=-1;if(c&&userAddress){try{voted=await c.hasUserVoted(p.id,userAddress);if(voted)userVoteType=await c.getUserVote(p.id,userAddress)}catch(e){}}const voteLabels=["For","Against","Abstain"];const hasTreasury=p.treasuryAmount!=="0"&&p.treasuryTarget!=="0x0000000000000000000000000000000000000000";const quorumMet=total>=p.quorum;html+=`<div class="p-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px"><div style="flex:1"><div class="p-meta"><span class="p-id">#${p.id}</span><span class="p-cat">${CATS[p.category]||"Other"}</span>${hasTreasury?'<span style="font-size:10px;color:#85B7EB">💰</span>':""}</div><div class="p-desc">${p.description}</div><div class="p-creator">${p.creator.slice(0,6)}...${p.creator.slice(-4)}</div></div>${statusPill(p)}</div><div class="vbars"><div class="vrow"><div class="vlabel">For</div><div class="vtrack"><div class="vfill bar-for" style="width:${barPct(p.forVotes,total)}%"></div></div><div class="vcount">${p.forVotes}</div></div><div class="vrow"><div class="vlabel">Against</div><div class="vtrack"><div class="vfill bar-against" style="width:${barPct(p.againstVotes,total)}%"></div></div><div class="vcount">${p.againstVotes}</div></div><div class="vrow"><div class="vlabel">Abstain</div><div class="vtrack"><div class="vfill bar-abstain" style="width:${barPct(p.abstainVotes,total)}%"></div></div><div class="vcount">${p.abstainVotes}</div></div></div><div class="p-footer"><div class="p-time">Quorum: ${total}/${p.quorum} ${quorumMet?"✅":""} · ${isActive?timeLeft(p.endTime):p.executed?"Executed":"Voting ended"}</div>${hasTreasury?`<div class="p-treasury">💸 ${ethers.utils.formatUnits(p.treasuryAmount,6)} USDC</div>`:""}</div>${isActive&&userAddress&&!voted?`<div class="vote-btns"><button class="vbtn vbtn-for" onclick="castVote(${p.id},0)">👍 For</button><button class="vbtn vbtn-against" onclick="castVote(${p.id},1)">👎 Against</button><button class="vbtn vbtn-abstain" onclick="castVote(${p.id},2)">🤚 Abstain</button></div>`:""}${voted?`<div class="voted-badge">You voted: <strong>${voteLabels[userVoteType]||"—"}</strong></div>`:""}${canExecute&&userAddress?`<button class="exec-btn" onclick="execProposal(${p.id})">Execute proposal</button>`:""}<div class="status" id="st-${p.id}"></div></div>`}list.innerHTML=html}
 
-async function createProposal(){if(!signer)return;const desc=document.getElementById("p-desc").value.trim();const cat=parseInt(document.getElementById("p-cat").value);const dur=getDuration();const quorum=parseInt(document.getElementById("p-quorum").value)||1;const tAddr=document.getElementById("p-taddr").value.trim()||"0x0000000000000000000000000000000000000000";const tAmt=document.getElementById("p-tamt").value||"0";if(!desc){showStatus("create-status","Please enter a description.","error");return}if(dur<3600){showStatus("create-status","Minimum duration is 1 hour.","error");return}const tAmtWei=ethers.utils.parseUnits(tAmt,6);showStatus("create-status","Step 1/2: Approving 20 USDC... confirm in wallet","loading");try{const usdcAbi=["function approve(address spender, uint256 amount) returns (bool)"];const usdcContract=new ethers.Contract("0x3600000000000000000000000000000000000000",usdcAbi,signer);const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("20",6));await approveTx.wait();showStatus("create-status","Step 2/2: Creating proposal... confirm in wallet","loading");const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.createProposal(desc,dur,cat,quorum,tAddr,tAmtWei);showStatus("create-status","Waiting for confirmation...","loading");await tx.wait();showStatus("create-status","✅ Proposal created!","success");document.getElementById("p-desc").value="";await loadProposals()}catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error")}}
+async function createProposal(){if(!signer)return;const desc=document.getElementById("p-desc").value.trim();const cat=parseInt(document.getElementById("p-cat").value);const dur=getDuration();const quorum=parseInt(document.getElementById("p-quorum").value)||1;const tAddr=document.getElementById("p-taddr").value.trim()||"0x0000000000000000000000000000000000000000";const tAmt=document.getElementById("p-tamt").value||"0";if(!desc){showStatus("create-status","Please enter a description.","error");return}if(dur<3600){showStatus("create-status","Minimum duration is 1 hour.","error");return}const tAmtWei=ethers.utils.parseUnits(tAmt,6);showStatus("create-status","Step 1/2: Approving 20 USDC... confirm in wallet","loading");try{const usdcAbi=["function approve(address spender, uint256 amount) returns (bool)"];const usdcContract=new ethers.Contract("0x3600000000000000000000000000000000000000",usdcAbi,signer);const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("0.5",6));await approveTx.wait();showStatus("create-status","Step 2/2: Creating proposal... confirm in wallet","loading");const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.createProposal(desc,dur,cat,quorum,tAddr,tAmtWei);showStatus("create-status","Waiting for confirmation...","loading");await tx.wait();showStatus("create-status","✅ Proposal created!","success");document.getElementById("p-desc").value="";await loadProposals()}catch(e){showStatus("create-status","Failed: "+(e.reason||e.message),"error")}}
 
 async function castVote(proposalId,voteType){if(!signer)return;const labels=["For","Against","Abstain"];showStatus("st-"+proposalId,"Voting "+labels[voteType]+"... confirm in wallet","loading");try{const c=new ethers.Contract(CONTRACT,ABI,signer);const tx=await c.vote(proposalId,voteType);await tx.wait();showStatus("st-"+proposalId,"✅ Vote recorded on-chain!","success");await loadProposals()}catch(e){showStatus("st-"+proposalId,"Failed: "+(e.reason||e.message),"error")}}
 
@@ -481,7 +481,7 @@ async function sendChat(prefix){
           <span class="preview-tag">Quorum: ${p.quorum}</span>
           ${p.treasury_amount&&p.treasury_amount!=="0"?`<span class="preview-tag">💸 ${p.treasury_amount} USDC</span>`:""}
         </div>
-        <div class="preview-warn">⚠️ Requires 20 USDC deposit from your wallet</div>
+        <div class="preview-warn">⚠️ Requires 0.5 USDC deposit from your wallet</div>
         <button class="preview-btn" onclick="submitProposalFromChat(${JSON.stringify(p).replace(/"/g,"'")}, '${statusId}')">Create this proposal →</button>
         <div class="preview-status" id="${statusId}"></div>
       `;
@@ -503,7 +503,7 @@ async function submitProposalFromChat(p,statusId){
     if(statusEl)statusEl.textContent="Step 1/2: Approving 20 USDC...";
     const usdcAbi=["function approve(address spender, uint256 amount) returns (bool)"];
     const usdcContract=new ethers.Contract("0x3600000000000000000000000000000000000000",usdcAbi,signer);
-    const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("20",6));
+    const approveTx=await usdcContract.approve(CONTRACT,ethers.utils.parseUnits("0.5",6));
     await approveTx.wait();
     if(statusEl)statusEl.textContent="Step 2/2: Creating proposal...";
     const tAddr=p.treasury_address||"0x0000000000000000000000000000000000000000";
